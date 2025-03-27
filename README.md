@@ -43,7 +43,7 @@ To set up QuickChores locally:
    npm run dev
    ```
 
-5. The app should now be running on `http://localhost:3000`.
+5. The app should now be running on `http://localhost:8000`.
 
 ## 🤝 Contributing
 We welcome contributions! If you have ideas or want to help develop QuickChores, feel free to fork the repo and submit a pull request.
