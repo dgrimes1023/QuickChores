@@ -162,28 +162,27 @@ export const searchChores = asyncHandler(async (req, res) => {
   }
 });
 
-
 export const applyToChore = asyncHandler(async (req, res) => {
-  try{
+  try {
     const chore = await Chore.findById(req.params.id);
 
-    if(!chore){
+    if (!chore) {
       return res.status(404).json({
-        message: "Chore not found"
+        message: "Chore not found",
       });
     }
 
     const user = await User.findOne({ auth0Id: req.oidc.user.sub });
 
-    if(!user){
+    if (!user) {
       return res.status(401).json({
-        message: "User not found"
+        message: "User not found",
       });
     }
 
-    if(chore.applicants.includes(user._id)){
+    if (chore.applicants.includes(user._id)) {
       return res.status(400).json({
-        message: "You have already applied for this chore!"
+        message: "You have already applied for this chore!",
       });
     }
 
@@ -192,12 +191,109 @@ export const applyToChore = asyncHandler(async (req, res) => {
     await chore.save();
 
     return res.status(200).json(chore);
-
-  } catch (error) { 
+  } catch (error) {
     console.log("Error in applyToChore: ", error.message);
 
     return res.status(500).json({
       message: "Internal Server Error",
     });
   }
-}); 
+});
+
+export const likeChore = asyncHandler(async (req, res) => {
+  try {
+    const chore = await Chore.findById(req.params.id);
+
+    if (!chore) {
+      return res.status(404).json({
+        message: "Chore not found",
+      });
+    }
+
+    const user = await User.findOne({ auth0Id: req.oidc.user.sub });
+
+    if (!user) {
+      return res.status(401).json({
+        message: "User not found",
+      });
+    }
+
+    const isLiked = chore.likes.includes(user._id);
+
+    if (isLiked) {
+      chore.likes = chore.likes.filter((like) => !like.equals(user._id));
+    } else {
+      chore.likes.push(user._id);
+    }
+
+    await chore.save();
+
+    return res.status(200).json(chore);
+  } catch (error) {
+    console.log("Error in likeChore: ", error.message);
+
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+});
+
+export const getChoreById = asyncHandler(async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const chore = await Chore.findById(id).populate(
+      "createdBy",
+      "name profilePicture"
+    );
+
+    if (!chore) {
+      return res.status(404).json({
+        message: "Chore not found",
+      });
+    }
+
+    return res.status(200).json(chore);
+  } catch (error) {
+    console.log("Error in getChoreById: ", error.message);
+
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+});
+
+export const deleteChore = asyncHandler(async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const chore = await Chore.findById(id);
+    const user = await User.findOne({ auth0Id: req.oidc.user.sub });
+
+    if (!chore) {
+      return res.status(404).json({
+        message: "Chore not found",
+      });
+    }
+
+    if (!user) {
+      return res.status(401).json({
+        message: "User not found",
+      });
+    }
+
+    await chore.deleteOne({
+      _id: id,
+    });
+
+    return res.status(200).json({
+      message: "Chore deleted successfully",
+    });
+  } catch (error) {
+    console.log("Error in deleteChore: ", error.message);
+
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+});
